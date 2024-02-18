@@ -548,9 +548,41 @@ void printDirectory()
   dir.close();
 }
 
+String urlDecode(const String &text)
+{
+  String decoded = "";
+  char temp[] = "0x00";
+  unsigned int len = text.length();
+  unsigned int i = 0;
+  while (i < len)
+  {
+    char decodedChar;
+    char encodedChar = text.charAt(i++);
+    if ((encodedChar == '%') && (i + 1 < len))
+    {
+      temp[2] = text.charAt(i++);
+      temp[3] = text.charAt(i++);
+      decodedChar = strtol(temp, NULL, 16);
+    }
+    else
+    {
+      if (encodedChar == '+')
+      {
+        decodedChar = ' ';
+      }
+      else
+      {
+        decodedChar = encodedChar; // normal ascii char
+      }
+    }
+    decoded += decodedChar;
+  }
+  return decoded;
+}
+
 void handleNotFound()
 {
-  if (hasSD && loadFromSdCard(server.uri()))
+  if (hasSD && loadFromSdCard(urlDecode(server.uri())))
     return;
   String message = "SDCARD Not Detected\n\n";
   message += "SD_PIN_MISO = "+ String(SD_PIN_MISO) +"\n";
