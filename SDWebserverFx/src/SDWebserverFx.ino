@@ -1,5 +1,3 @@
-
-
 /*                                                                                                       \
    SDWebServer - Example WebServer with SD Card backend for esp8266                                                      \
                                                                                                                          \
@@ -48,9 +46,7 @@
 #include <ArduinoOTA.h>  // ArduinoOTA by Arduino, Juraj  https://github.com/JAndrassy/ArduinoOTA
 
 #include <SPI.h>
-// ASD #include <SD.h>
-//#include "FreeStack.h"
-#include "SdFat.h"  // https://github.com/greiman/SdFat
+#include "SdFat.h" // https://github.com/greiman/SdFat
 
 #include "NTP.hpp"
 #if not defined(ESP8266)
@@ -165,6 +161,24 @@ https://github.com/Xinyuan-LilyGO/ESP32_S2
 #define RXD 20
 #define TXD 21
 
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+// https://github.com/wuxx/nanoESP32-C6
+
+#define SD_PIN_SCK 21
+#define SD_PIN_MOSI 19
+#define SD_PIN_MISO 20
+#define SD_PIN_CS 18
+
+#define PIN_NEOPIXEL 8
+#define BOOTPIN 9
+
+#define LED_RED_PIN 4
+#define LED_ORANGE_PIN 5
+#define LED_GREEN_PIN 6
+
+#define RXD 17
+#define TXD 16
+
 #elif defined(CONFIG_IDF_TARGET_ESP32)
 /****************************************************************************
     pin setup
@@ -239,6 +253,8 @@ const char *host = "ESP-NAS-12E";
 const char *host = "ESP-NAS-ESP32"; // CONFIG_IDF_TARGET=ESP32
 #elif defined(CONFIG_IDF_TARGET_ESP32C3)
 const char *host = "ESP-NAS-C3";
+#elif defined(CONFIG_IDF_TARGET_ESP32C6)
+const char *host = "ESP-NAS-C6";
 #elif defined(CONFIG_IDF_TARGET_ESP32S2)
 const char *host = "ESP-NAS-S2";
 #elif defined(CONFIG_IDF_TARGET_ESP32S3)
@@ -265,6 +281,7 @@ unsigned long PreviousTimeDay;
 uint16_t Config_Reset_Counter = 0;
 int OTAUploadBusy = 0;
 static bool hasSD = false;
+int SDmaxSpeed = 0;
 
 //------------------------------------------------------------------------------
 // This example was designed for exFAT but will support FAT16/FAT32.
@@ -292,29 +309,14 @@ typedef FsFile file_t;
 #endif // SD_FAT_TYPE
 
 #define MAX_FILENAME_SIZE 256
-#define MAX_PATHNAME_SIZE (MAX_FILENAME_SIZE*3)
-
-// Try max SPI clock for an SD. Reduce SPI_CLOCK if errors occur.
-#if defined(ESP8266) 
-#define SPI_CLOCK SD_SCK_MHZ(8)
-#elif defined(CONFIG_IDF_TARGET_ESP32)
-#define SPI_CLOCK SD_SCK_MHZ(16)
-#elif defined(CONFIG_IDF_TARGET_ESP32C3)
-#define SPI_CLOCK SD_SCK_MHZ(16)
-#elif defined(CONFIG_IDF_TARGET_ESP32S2)
-#define SPI_CLOCK SD_SCK_MHZ(16)
-#else
-#define SPI_CLOCK SD_SCK_MHZ(50)
-#endif
+#define MAX_PATHNAME_SIZE (MAX_FILENAME_SIZE * 3)
 
 // Try to select the best SD card configuration.
-#if HAS_SDIO_CLASS
-#define SD_CONFIG SdioConfig(FIFO_SDIO)
-#elif ENABLE_DEDICATED_SPI
-#define SD_CONFIG SdSpiConfig(SD_PIN_CS, DEDICATED_SPI, SPI_CLOCK, sd_spi)
-#else // HAS_SDIO_CLASS
-#define SD_CONFIG SdSpiConfig(SD_PIN_CS, SHARED_SPI, SPI_CLOCK, sd_spi)
-#endif // HAS_SDIO_CLASS
+#if ENABLE_DEDICATED_SPI
+#define SD_SPI_TYPE DEDICATED_SPI
+#else
+#define SD_SPI_TYPE SHARED_SPI
+#endif
 
 file_t uploadFile;
 sd_t sd;
@@ -368,38 +370,39 @@ bool loadFromSdCard(String path)
   if (!dataFile)
     return false;
   uint64_t filesize = dataFile.size();
-  if (server.hasArg("download")) dataType = "application/octet-stream";
-  
+  if (server.hasArg("download"))
+    dataType = "application/octet-stream";
+
   if (path.endsWith("gz") &&
       dataType != "application/x-gzip" &&
       dataType != "application/octet-stream")
   {
     server.sendHeader(F("Content-Encoding"), F("gzip"));
-    }
-    //server.sendHeader("Connection","keep-alive",true);
-    //server.sendHeader("Keep-Alive", "timeout=2000");
-    //server.setContentLength(CONTENT_LENGTH_UNKNOWN);
+  }
+  // server.sendHeader("Connection","keep-alive",true);
+  // server.sendHeader("Keep-Alive", "timeout=2000");
+  // server.setContentLength(CONTENT_LENGTH_UNKNOWN);
 
-    server.setContentLength(filesize);
-    server.send(200, dataType, "");
+  server.setContentLength(filesize);
+  server.send(200, dataType, "");
 
-    size_t blocksize = 0;
-    char databuffer[1024];
-    while (filesize > 0)
-      {
-        blocksize = dataFile.read(databuffer, sizeof(databuffer));
-        if (blocksize > 0)
-          server.sendContent(databuffer, blocksize);
-        else
-          filesize = 0;
-        if (filesize > blocksize)
-          filesize -= blocksize;
-        else
-          filesize = 0;
-      }
-      server.client().flush();
-      dataFile.close();
-      return true;
+  size_t blocksize = 0;
+  char databuffer[1024];
+  while (filesize > 0)
+  {
+    blocksize = dataFile.read(databuffer, sizeof(databuffer));
+    if (blocksize > 0)
+      server.sendContent(databuffer, blocksize);
+    else
+      filesize = 0;
+    if (filesize > blocksize)
+      filesize -= blocksize;
+    else
+      filesize = 0;
+  }
+  server.client().flush();
+  dataFile.close();
+  return true;
 }
 
 void handleFileUpload()
@@ -460,7 +463,6 @@ void deleteRecursive(String path)
 
   sd.rmdir((char *)path.c_str());
   file.close();
-  
 }
 
 void handleDelete()
@@ -538,7 +540,7 @@ void printDirectory()
     output += "{\"type\":\"";
     output += (entry.isDirectory()) ? "dir" : "file";
     output += "\",\"name\":\"";
-    entry.getName(filename, sizeof(filename));  
+    entry.getName(filename, sizeof(filename));
     output += filename;
     output += "\"}";
     server.sendContent(output);
@@ -585,11 +587,11 @@ void handleNotFound()
   if (hasSD && loadFromSdCard(urlDecode(server.uri())))
     return;
   String message = "SDCARD Not Detected\n\n";
-  message += "SD_PIN_MISO = "+ String(SD_PIN_MISO) +"\n";
+  message += "SD_PIN_MISO = " + String(SD_PIN_MISO) + "\n";
   message += "SD_PIN_MOSI = " + String(SD_PIN_MOSI) + "\n";
   message += "SD_PIN_SCK = " + String(SD_PIN_SCK) + "\n";
   message += "SD_PIN_CS = " + String(SD_PIN_CS) + "\n";
-  message += "SPI_CLOCK = " + String(SPI_CLOCK/1000000UL) + "\n";
+  message += "SPI_CLOCK = " + String(SDmaxSpeed) + " Mhz\n";
   message += "URI: ";
   message += server.uri();
   message += "\nMethod: ";
@@ -666,7 +668,7 @@ void setup(void)
   pinMode(BOOTPIN, INPUT_PULLUP);
   pinMode(LED_RED_PIN, OUTPUT);
   pinMode(SD_PIN_CS, OUTPUT);
-  digitalWrite(SD_PIN_CS, LOW);
+  digitalWrite(SD_PIN_CS, HIGH);
 
 #if defined(ESP8266) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32)
   DBG_OUTPUT_PORT.begin(115200);
@@ -698,7 +700,7 @@ void setup(void)
     delay(5000);
     if (digitalRead(BOOTPIN) == LOW)
     {
-      // wm.resetSettings();
+      wm.resetSettings();
     }
     ESP.restart();
   }
@@ -728,7 +730,7 @@ void setup(void)
 
 #if not defined(ESP8266)
   esp_wifi_set_ps(WIFI_PS_NONE); // Esp32 enters the power saving mode by default,
-#endif 
+#endif
 
   DBG_OUTPUT_PORT.print("Connected! IP address: ");
   DBG_OUTPUT_PORT.println(WiFi.localIP());
@@ -766,16 +768,16 @@ void setup(void)
       type = "filesystem";
     }
     // NOTE: if updating FS this would be the place to unmount FS using FS.end()
-    OTAUploadBusy=60; // only do a update for 60 sec;
+    OTAUploadBusy=20; // only do a update for 20 sec;
     DBG_OUTPUT_PORT.println("Start updating " + type); });
-    ArduinoOTA.onEnd([]()
-     {
+  ArduinoOTA.onEnd([]()
+                   {
       OTAUploadBusy=0;
       DBG_OUTPUT_PORT.println("\nEnd"); });
-      ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)
-                          { DBG_OUTPUT_PORT.printf("Progress: %u%%\r", (progress / (total / 100))); });
-      ArduinoOTA.onError([](ota_error_t error)
-     {
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total)
+                        { DBG_OUTPUT_PORT.printf("Progress: %u%%\r", (progress / (total / 100))); });
+  ArduinoOTA.onError([](ota_error_t error)
+                     {
     OTAUploadBusy=0;
     DBG_OUTPUT_PORT.printf("Error[%u]: ", error);
     if (error == OTA_AUTH_ERROR) {
@@ -804,34 +806,48 @@ void setup(void)
   DBG_OUTPUT_PORT.println("HTTP server started");
 
 #if defined(ESP8266) || defined(CONFIG_IDF_TARGET_ESP32)
-  //if (sd.begin(SD_PIN_CS))
-  if (sd.begin(SD_PIN_CS, SPI_CLOCK))
+  SDmaxSpeed = 16;
+  hasSD = false;
+  while (hasSD == false && SDmaxSpeed > 8)
+  {
+    if (sd.begin(SD_PIN_CS, 1000000UL * SDmaxSpeed ))
     {
       DBG_OUTPUT_PORT.println("SD Card initialized.");
       hasSD = true;
-  } else {
+    }
+    else
+      SDmaxSpeed -= 4; // Reduce the speed
+  }
+  if (hasSD == false)
+  {
     DBG_OUTPUT_PORT.println("SD Card initialized failed.");
   }
 #else
 
-#if defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32C3) || defined(CONFIG_IDF_TARGET_ESP32C6)
   sd_spi = new SPIClass(FSPI);
-  //sd_spi = new SPIClass(HSPI);
 #else
   sd_spi = new SPIClass(); // HSPI
 #endif
 
   sd_spi->begin(SD_PIN_SCK, SD_PIN_MISO, SD_PIN_MOSI, SD_PIN_CS);
-  // pinMode(sd_spi->pinSS(), OUTPUT);
-  // ASD if (sd.begin(SD_PIN_CS, *sd_spi, 40000000))
-    // Initialize SD.
-  if (sd.begin(SD_CONFIG))
+
+  SDmaxSpeed = 50;
+  hasSD = false;
+  while (hasSD == false && SDmaxSpeed > 8)
   {
-    DBG_OUTPUT_PORT.println("SD Card initialized.");
-    hasSD = true;
+    if (sd.begin(SdSpiConfig(SD_PIN_CS, SD_SPI_TYPE, 1000000UL * SDmaxSpeed, sd_spi)))
+    {
+      DBG_OUTPUT_PORT.println("SD Card initialized.");
+      hasSD = true;
+    }
+    else
+      SDmaxSpeed -= 4; // Reduce the speed
   }
-  else
+  if (hasSD == false)
+  {
     DBG_OUTPUT_PORT.println("SD Card initialized failed.");
+  }
 #endif
 
   timeClient.begin();
@@ -869,7 +885,53 @@ void setup(void)
   message += " FlashChipMode: " + String(ESP.getFlashChipMode());
 
   message += " Build Date: " + String(__DATE__ " " __TIME__);
-  //message += " CardSize: " + String(sd.card(). / 1000 / 1000) + "MB ";
+  // message += " CardSize: " + String(sd.card(). / 1000 / 1000) + "MB ";
+  message += " CardSpeed: " + String(SDmaxSpeed);
+  {
+    cid_t cid;
+    csd_t csd;
+    scr_t scr;
+    uint32_t ocr;
+    if (!sd.card()->readCID(&cid) || !sd.card()->readCSD(&csd) ||
+        !sd.card()->readOCR(&ocr) || !sd.card()->readSCR(&scr))
+    {
+      message += F(" readSDInfo failed\n");
+    }
+    else
+    {
+      message += F(" SDType=");
+      switch (sd.card()->type())
+      {
+      case SD_CARD_TYPE_SD1:
+        message += "SD1";
+        break;
+      case SD_CARD_TYPE_SD2:
+        message += "SD2";
+        break;
+      case SD_CARD_TYPE_SDHC:
+        if (csd.capacity() < 70000000)
+        {
+          message += F("SDHC");
+        }
+        else
+        {
+          message += F("SDXC");
+        }
+        break;
+      default:
+        message += F("Unknown");
+      }
+      if (sd.fatType() <= 32)
+      {
+        message += " FAT" + String(sd.fatType());
+      }
+      else
+      {
+        message += F(" exFAT");
+      }
+      message += " CardSize: " + String(0.000512 * csd.capacity());
+    }
+  }
 #if not defined(ESP8266)
   message += " " + reset_reason(rtc_get_reset_reason(0));
 #endif
@@ -881,11 +943,7 @@ void Log(String Str)
   if (sd.exists("/Log.txt"))
   {
     String message = "";
-#if defined(ESP8266)
     file_t LogFile = sd.open("/Log.txt", FILE_WRITE | O_APPEND);
-#else
-    file_t LogFile = sd.open("/Log.txt", FILE_WRITE | O_APPEND); // ASD FILE_APPEND);
-#endif
     message += String(getFormattedDateTime(timeClient.getEpochTime())) + ",";
     message += Str;
     LogFile.println(message);
