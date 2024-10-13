@@ -879,7 +879,6 @@ void setup(void)
 #if defined(CONFIG_IDF_TARGET_ESP32)
   message += " HallSensor: " + String(hallRead());
 #endif
-  message += " FlashChipMode: " + String(ESP.getFlashChipMode());
 #else
   message += " FlashChipId: " + String(ESP.getFlashChipId());
   message += " FlashChipRealSize: " + String(ESP.getFlashChipRealSize());
