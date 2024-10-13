@@ -54,6 +54,8 @@
 #endif
 
 #define DBG_OUTPUT_PORT Serial
+ // USBSerial Serial Serial1 Serial2
+
 #if defined(ESP8266)
 #warning "ESP8266 Pins You can not change them"
 
@@ -884,7 +886,20 @@ void setup(void)
 #endif
   message += " FlashChipSize: " + String(ESP.getFlashChipSize());
   message += " FlashChipSpeed: " + String(ESP.getFlashChipSpeed());
-  message += " FlashChipMode: " + String(ESP.getFlashChipMode());
+#if not defined(CONFIG_IDF_TARGET_ESP32S3) || ESP_ARDUINO_VERSION_MAJOR > 2
+  // [ESP::getFlashChipMode crashes on ESP32S3 boards](https://github.com/espressif/arduino-esp32/issues/9816) 
+  message += " FlashChipMode: ";
+  switch( ESP.getFlashChipMode()){
+    case FM_QIO :message += "FM_QIO"; break;
+    case FM_QOUT:message += "FM_QOUT";break;
+    case FM_DIO :message += "FM_DIO"; break;
+    case FM_DOUT:message += "FM_DOUT";break;
+    case FM_FAST_READ:message += "FM_FAST_READ";break;
+    case FM_SLOW_READ:message += "FM_SLOW_READ";break;
+    default:
+      message += String(ESP.getFlashChipMode());
+  }
+#endif 
 
   message += " Build Date: " + String(__DATE__ " " __TIME__);
   // message += " CardSize: " + String(sd.card(). / 1000 / 1000) + "MB ";
