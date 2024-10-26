@@ -885,7 +885,8 @@ void setup(void)
 #endif
   message += " FlashChipSize: " + String(ESP.getFlashChipSize());
   message += " FlashChipSpeed: " + String(ESP.getFlashChipSpeed());
-#if not defined(CONFIG_IDF_TARGET_ESP32S3) || ESP_ARDUINO_VERSION_MAJOR > 2
+#if not defined(ESP8266)
+#if ESP_ARDUINO_VERSION != ESP_ARDUINO_VERSION_VAL(2, 0, 17)
   // [ESP::getFlashChipMode crashes on ESP32S3 boards](https://github.com/espressif/arduino-esp32/issues/9816) 
   message += " FlashChipMode: ";
   switch( ESP.getFlashChipMode()){
@@ -899,6 +900,7 @@ void setup(void)
       message += String(ESP.getFlashChipMode());
   }
 #endif 
+#endif
 
   message += " Build Date: " + String(__DATE__ " " __TIME__);
   // message += " CardSize: " + String(sd.card(). / 1000 / 1000) + "MB ";
