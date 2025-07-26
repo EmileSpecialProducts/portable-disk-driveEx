@@ -138,6 +138,12 @@ https://github.com/Xinyuan-LilyGO/ESP32_S2
 #define SD_PIN_MOSI 11
 #define SD_PIN_MISO 13
 #define SD_PIN_CS 10
+
+//#define SD_PIN_SCK 9
+//#define SD_PIN_MOSI 10
+//#define SD_PIN_MISO 11
+//#define SD_PIN_CS 8
+
 #define BOOTPIN 0
 
 #define LED_RED_PIN 4
@@ -170,6 +176,11 @@ https://github.com/Xinyuan-LilyGO/ESP32_S2
 #define SD_PIN_MOSI 19
 #define SD_PIN_MISO 20
 #define SD_PIN_CS 18
+
+//#define SD_PIN_SCK 19
+//#define SD_PIN_MOSI 18
+//#define SD_PIN_MISO 20
+//#define SD_PIN_CS 23
 
 #define PIN_NEOPIXEL 8
 #define BOOTPIN 9
@@ -404,7 +415,8 @@ bool loadFromSdCard(String path)
     else
       filesize = 0;
   }
-  server.client().flush();
+  // server.client().flush();
+  server.client().clear();
   dataFile.close();
   return true;
 }
@@ -418,7 +430,8 @@ void handleFileUpload()
   {
     if (sd.exists((char *)upload.filename.c_str()))
       sd.remove((char *)upload.filename.c_str());
-    uploadFile = sd.open(upload.filename.c_str(), FILE_WRITE);
+      //EVDL uploadFile = sd.open(upload.filename.c_str(), FILE_WRITE);
+    uploadFile = sd.open(upload.filename.c_str(), O_RDWR  | O_CREAT);
   }
   else if (upload.status == UPLOAD_FILE_WRITE)
   {
@@ -496,7 +509,8 @@ void handleCreate()
 
   if (path.indexOf('.') > 0)
   {
-    file_t file = sd.open((char *)path.c_str(), FILE_WRITE);
+    //EVDL file_t file = sd.open((char *)path.c_str(), FILE_WRITE);
+    file_t file = sd.open((char *)path.c_str(), O_RDWR  | O_CREAT);
     if (file)
     {
       file.write("");
@@ -545,8 +559,9 @@ void printDirectory()
     output += (entry.isDirectory()) ? "dir" : "file";
     output += "\",\"name\":\"";
     entry.getName(filename, sizeof(filename));
-    output += filename;
-    output += "\"}";
+    output += filename ;
+    output += "\"";
+    output += String((entry.isDirectory()) ?"}":",\"size\":\"" + String(entry.size())+"\"}"); 
     server.sendContent(output);
     entry.close();
   }
@@ -586,16 +601,44 @@ String urlDecode(const String &text)
   return decoded;
 }
 
+const char Index_html[] PROGMEM = R"rawliteral(<!DOCTYPE html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>ESP-SD-FatEx-Web-Server Editor</title>
+    <!--<script src="editor.js" type="text/javascript"></script>-->  
+    <script src="https://emilespecialproducts.github.io/ESP-SD-FatEx-Web-Server/editor.js" type="text/javascript"></script> 
+  </head>
+  <body onload="onBodyLoad();">
+    <div id="uploader"></div>
+    <div id="tree" class="css-tree"></div>
+    <div id="editor"></div>
+    <div id="preview" style="display:none;"></div>
+    <iframe id=download-frame style='display:none;'></iframe>
+  </body>
+</html>
+)rawliteral";
+
 void handleNotFound()
 {
   if (hasSD && loadFromSdCard(urlDecode(server.uri())))
     return;
-  String message = "SDCARD Not Detected\n\n";
-  message += "SD_PIN_MISO = " + String(SD_PIN_MISO) + "\n";
-  message += "SD_PIN_MOSI = " + String(SD_PIN_MOSI) + "\n";
-  message += "SD_PIN_SCK = " + String(SD_PIN_SCK) + "\n";
-  message += "SD_PIN_CS = " + String(SD_PIN_CS) + "\n";
-  message += "SPI_CLOCK = " + String(SDmaxSpeed) + " Mhz\n";
+  if( urlDecode(server.uri()).equals("/index.html") )
+  {
+    server.send_P(200, "text/html", Index_html, sizeof(Index_html)-1);
+    return;
+  }
+  String message="";  
+  if(hasSD == false)
+  {
+    message += "SDCARD Not Detected\n\n";
+    message += "SD_PIN_MISO = " + String(SD_PIN_MISO) + "\n";
+    message += "SD_PIN_MOSI = " + String(SD_PIN_MOSI) + "\n";
+    message += "SD_PIN_SCK = " + String(SD_PIN_SCK) + "\n";
+    message += "SD_PIN_CS = " + String(SD_PIN_CS) + "\n";
+    message += "SPI_CLOCK = " + String(SDmaxSpeed) + " Mhz\n";
+  }
+  message += "File not found on SD card ";
   message += "URI: ";
   message += server.uri();
   message += "\nMethod: ";
@@ -603,7 +646,7 @@ void handleNotFound()
   message += "\nArguments: ";
   message += server.args();
   message += "\n";
-
+  
   for (uint8_t i = 0; i < server.args(); i++)
   {
     message += " NAME:" + server.argName(i) + "\n VALUE:" + server.arg(i) + "\n";
@@ -674,7 +717,7 @@ void setup(void)
   pinMode(SD_PIN_CS, OUTPUT);
   digitalWrite(SD_PIN_CS, HIGH);
 
-#if defined(ESP8266) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32)
+#if   ARDUINO_USB_CDC_ON_BOOT || defined(ESP8266) || defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32)
   DBG_OUTPUT_PORT.begin(115200);
 #else
   DBG_OUTPUT_PORT.begin(115200, SERIAL_8N1, RXD, TXD);
@@ -797,11 +840,14 @@ void setup(void)
     } });
   ArduinoOTA.begin();
 
+  server.on("/",[](){
+      server.sendHeader("Location", "/index.html",true); //Redirect to our html web page 
+      server.send(302, "text/plane","");
+  });
   server.on("/list", HTTP_GET, printDirectory);
   server.on("/edit", HTTP_DELETE, handleDelete);
   server.on("/edit", HTTP_PUT, handleCreate);
-  server.on(
-      "/edit", HTTP_POST, []()
+  server.on("/edit", HTTP_POST, []()
       { returnOK(); },
       handleFileUpload);
   server.onNotFound(handleNotFound);
@@ -876,9 +922,6 @@ void setup(void)
   message += " Total PSRAM: " + String(ESP.getPsramSize() / 1024);
   message += " Free PSRAM: " + String(ESP.getFreePsram() / 1024);
   message += " Temperature: " + String(temperatureRead()) + " °C "; // internal TemperatureSensor
-#if defined(CONFIG_IDF_TARGET_ESP32)
-  message += " HallSensor: " + String(hallRead());
-#endif
 #else
   message += " FlashChipId: " + String(ESP.getFlashChipId());
   message += " FlashChipRealSize: " + String(ESP.getFlashChipRealSize());
@@ -951,8 +994,11 @@ void setup(void)
     }
   }
 #if not defined(ESP8266)
-  message += " " + reset_reason(rtc_get_reset_reason(0));
+  message += " " + reset_reason(rtc_get_reset_reason(0));  
+  message += " esp_idf_version: " + String(esp_get_idf_version());
+  message += " arduino_version: " + String(ESP_ARDUINO_VERSION_MAJOR) + "." + String(ESP_ARDUINO_VERSION_MINOR) + "." + String(ESP_ARDUINO_VERSION_PATCH);
 #endif
+  DBG_OUTPUT_PORT.print(message);
   Log(message);
 }
 
@@ -961,7 +1007,8 @@ void Log(String Str)
   if (sd.exists("/Log.txt"))
   {
     String message = "";
-    file_t LogFile = sd.open("/Log.txt", FILE_WRITE | O_APPEND);
+    //EVDL file_t LogFile = sd.open("/Log.txt", FILE_WRITE | O_APPEND);
+    file_t LogFile = sd.open("/Log.txt", O_RDWR  | O_APPEND);
     message += String(getFormattedDateTime(timeClient.getEpochTime())) + ",";
     message += Str;
     LogFile.println(message);
