@@ -5,8 +5,9 @@
 </p>
 # portable-disk-drive
 
-This is the SD-Card example for esp-arduino 8266/ESP32/ESP32S2/ESP32S3/ESP32C3. 
-It will support FatEx that is based on the greiman/SdFat.
+This is the SD-Card example for esp-arduino 8266/ESP32/ESP32S2/ESP32S3/ESP32C3/ESP32C6. 
+It will support FatEx >32GB that is based on the greiman/SdFat.
+And is supported by arduino 3.2.1
 It also has OTA software update support, and a Wifi manager.
 Wifi login can be reseted by pressing the Boot button for 5 Seconds 
 Platformio is also supported.
