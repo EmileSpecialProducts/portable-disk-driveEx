@@ -1,3 +1,8 @@
+<p align="center">
+  <a href="https://buymeacoffee.com/emilespecialproducts">
+    <img alt="BuymeaCoffee" src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png">
+  </a>
+</p>
 # portable-disk-drive
 
 This is the SD-Card example for esp-arduino 8266/ESP32/ESP32S2/ESP32S3/ESP32C3. 
