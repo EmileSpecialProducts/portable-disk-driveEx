@@ -415,8 +415,11 @@ bool loadFromSdCard(String path)
     else
       filesize = 0;
   }
-  // server.client().flush();
+  #if defined(ESP8266)
+  server.client().flush();
+  #else
   server.client().clear();
+  #endif
   dataFile.close();
   return true;
 }
