@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/x-icon" href="./favicon.ico">
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <title>ESP Web tool</title>
+    <script type="module" src="https://unpkg.com/esp-web-tools@10.1.1/dist/web/install-button.js?module"></script>
+     
+</head>
+<body>
+    <main>
+        <section>
+
+            <h2>SDEx card Server</h2>
+            
+            <h3>Devices ESP-32 (Clasic/S2/S3/C3/C6) / ESP8266</h3>
+            <p>
+                This will program the SDEX card Server software to the ESP-32 (Clasic/S2/S3/C3/C6) / ESP8266 device.
+            </p>
+            <table >
+                <tr>
+                    <th>Device</th>
+                    <th>SD_CS</th>
+                    <th>SD_CLK</th>
+                    <th>SD_MOSI</th>
+                    <th>SD_MISO</th>
+                </tr>
+                     <tr>
+                    <td>ESP8266 4MB </td>
+                    <td>15</td>
+                    <td>14</td>
+                    <td>13</td>
+                    <td>12</td>
+                </tr>
+    
+                <tr>
+                    <td>ESP32-Clasic 4MB</td>
+                    <td>5</td>
+                    <td>18</td>
+                    <td>23</td>
+                    <td>19</td>                </tr>
+                <tr>
+                    <td>ESP32-S2 4MB</td>
+                    <td>10</td>
+                    <td>12</td>
+                    <td>11</td>
+                    <td>13</td>
+                </tr>
+                <tr>
+                    <td>ESP32-S3 8MB</td>
+                    <td>10</td>
+                    <td>12</td>
+                    <td>11</td>
+                    <td>13</td>
+                </tr>
+                <tr>
+                    <td>ESP32-C3 4MB</td>
+                    <td>10</td>
+                    <td>3</td>
+                    <td>4</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td>ESP32-C6 8MB</td>
+                    <td>18</td>
+                    <td>21</td>
+                    <td>19</td>
+                    <td>20</td>
+                </tr>
+            </table>
+            <h3>Functions</h3>
+            <table id="ducky-functions-table">
+                <thead>
+                    <tr>
+                        <th>Upload / Program </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><esp-web-install-button manifest="./manifest.json">    
+                            <button class="danger" slot="activate">Button to Install</button>
+                        </esp-web-install-button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <h3>Information</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>...</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div>
+                                You can find the Github at <a href="https://github.com/EmileSpecialProducts/portable-disk-driveEx">this</a> location
+                            </div>
+   
+                            <div>
+                                You can find the ESPWebTool information at <a href="https://esphome.github.io/esp-web-tools/">this</a> location or the <a href="https://github.com/esphome/esp-web-tools/">GitHub</a>
+                            </div>
+                            <div>
+                                The ESPWebTool is based on the <a href="https://github.com/espressif/esptool-js">esptool-js</a>
+                            </div>
+                            <div>
+                                You can find a Serial monitor at <a href="https://www.serialterminal.com/">this</a> location
+                            </div>
+                            <div>
+                                Or this Serial monitor at <a href="https://tyeth.github.io/read-partitions-esptool-js/">this</a> location
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>   
+            </table>
+        </section>
+    </main>
+    <footer>
+        You can find the source of of this software at this github
+        <a href="https://github.com/EmileSpecialProducts/portable-disk-driveEx" target="_blank">archive</a>
+         
+    </footer>
+</body>
+</html>

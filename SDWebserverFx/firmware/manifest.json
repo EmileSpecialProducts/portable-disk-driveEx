@@ -1,0 +1,60 @@
+{
+  "name": "ESP-SD-Async-Web-Server",
+  "version": "2025.07.28",
+  "home_assistant_domain": "ESP-SDEX-Web-Server",
+  "funding_url": "https://github.com/EmileSpecialProducts/portable-disk-driveEx",
+  "builds": [
+    {
+      "chipFamily": "ESP8266",
+      "parts": [
+        { "path": "./esp8266_4MB_/firmware.bin", "offset": 0}
+      ]
+    },   
+   {
+      "chipFamily": "ESP32",
+      "parts": [
+        { "path": "./esp32_4MB_dio/bootloader.bin", "offset": 4096 },
+        { "path": "./esp32_4MB_dio/partitions.bin", "offset": 32768 },
+        { "path": "./esp32_4MB_dio/boot_app0.bin", "offset": 57344 },
+        { "path": "./esp32_4MB_dio/firmware.bin", "offset": 65536 }
+      ]
+    },
+      
+    {
+      "chipFamily": "ESP32-S2",
+      "parts": [
+        { "path": "./esp32s2_4MB_dio/bootloader.bin", "offset": 4096 },
+        { "path": "./esp32s2_4MB_dio/partitions.bin", "offset": 32768 },
+        { "path": "./esp32s2_4MB_dio/boot_app0.bin", "offset": 57344 },
+        { "path": "./esp32s2_4MB_dio/firmware.bin", "offset": 65536 }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        { "path": "./esp32s3_4MB_qio/bootloader.bin", "offset": 0 },
+        { "path": "./esp32s3_4MB_qio/partitions.bin", "offset": 32768 },
+        { "path": "./esp32s3_4MB_qio/boot_app0.bin", "offset": 57344 },
+        { "path": "./esp32s3_4MB_qio/firmware.bin", "offset": 65536 }
+      ]
+    },
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        { "path": "./esp32c3_4MB_qio/bootloader.bin", "offset": 0 },
+        { "path": "./esp32c3_4MB_qio/partitions.bin", "offset": 32768 },
+        { "path": "./esp32c3_4MB_qio/boot_app0.bin", "offset": 57344 },
+        { "path": "./esp32c3_4MB_qio/firmware.bin", "offset": 65536 }
+      ]
+    }, 
+    {
+      "chipFamily": "ESP32-C6",
+      "parts": [
+        { "path": "./esp32c6_4MB_qio/bootloader.bin", "offset": 0 },
+        { "path": "./esp32c6_4MB_qio/partitions.bin", "offset": 32768 },
+        { "path": "./esp32c6_4MB_qio/boot_app0.bin", "offset": 57344 },
+        { "path": "./esp32c6_4MB_qio/firmware.bin", "offset": 65536 }
+      ]
+    }
+  ]
+}
