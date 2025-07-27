@@ -18,7 +18,8 @@ It is based on the work that
 <a href="https://github.com/shuzonudas/portable-disk-drive">Mohammed Rezwanul Islam</a>
 has done see his video <a href="https://www.youtube.com/watch?v=zJP3Ie3nE7c&t=5s
 "> video</a>
-You can program the ESP by using this <href="https://emilespecialproducts.github.io/ESP-SD-FatEx-Web-Server/upload.html">link</a>
+
+You can program the ESP by using this <a href="https://emilespecialproducts.github.io/ESP-SD-FatEx-Web-Server/upload.html">link</a>
 <h3>Devices ESP-32 (Classic/S2/S3/C3/C6) / ESP8266</h3>
             <p>
               SD card Server software to the ESP-32 (Clasic/S2/S3/C3/C6) / ESP8266 device.
