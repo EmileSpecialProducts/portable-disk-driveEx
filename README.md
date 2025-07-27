@@ -19,6 +19,7 @@ It is based on the work that
 has done see his video <a href="https://www.youtube.com/watch?v=zJP3Ie3nE7c&t=5s
 "> video</a>
 
+You can program the ESP by using this <a href="https://emilespecialproducts.github.io/ESP-SD-FatEx-Web-Server/upload.html">link</a>
 <h3>Devices ESP-32 (Classic/S2/S3/C3/C6) / ESP8266</h3>
             <p>
               SD card Server software to the ESP-32 (Clasic/S2/S3/C3/C6) / ESP8266 device.
