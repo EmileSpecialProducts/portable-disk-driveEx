@@ -1,5 +1,5 @@
 {
-  "name": "ESP-SD-Async-Web-Server",
+  "name": "ESP-SDEX-Web-Server",
   "version": "2025.07.28",
   "home_assistant_domain": "ESP-SDEX-Web-Server",
   "funding_url": "https://github.com/EmileSpecialProducts/portable-disk-driveEx",
