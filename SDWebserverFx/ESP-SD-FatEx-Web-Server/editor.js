@@ -7,7 +7,7 @@ link.href = "https://emilespecialproducts.github.io/ESP-SD-FatEx-Web-Server/edit
 document.head.appendChild(link);
 
 var script = document.createElement("script");
-script.src = "https://cdnjs.cloudflare.com/ajax/libs/ace/1.36.5/ace.js";
+script.src = "https://cdnjs.cloudflare.com/ajax/libs/ace/1.43.2/ace.js";
 script.type = "text/javascript";
 var Currentfilename;
 var CurFile = document.createElement("span");
