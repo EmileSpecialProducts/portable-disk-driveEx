@@ -127,7 +127,7 @@ function createTree(element, editor) {
   document.getElementById(element).appendChild(treeRoot);
 
   function loadDownload(path) {
-    document.getElementById('download-frame').src = path + "?download=true";
+    //document.getElementById('download-frame').src = path + "?download=true";
   }
 
   function loadPreview(path) {
@@ -210,9 +210,10 @@ function createTree(element, editor) {
     }
     var download = document.createElement("li");
     list.appendChild(download);
-    download.innerHTML = "<span>Download</span>";
+    //download.innerHTML = "<span>Download</span>";
+	download.innerHTML = "<span><a href='"+path+"' download>Download</a></span>";
     download.onclick = function (e) {
-      loadDownload(path);
+      //loadDownload(path);
       if (document.body.getElementsByClassName('contextMenu').length > 0) document.body.removeChild(el);
     };
     var delFile = document.createElement("li");
